@@ -2130,6 +2130,7 @@ _Appears in:_
 | Field | Type | Required | Default | Description |
 | ---   | ---  | ---      | ---     | ---         |
 | `provider` | _[GeoIPProvider](#geoipprovider)_ |  true  |  | Provider defines the GeoIP provider configuration used by GeoIP filter instances. |
+| `customHeader` | _[GeoIPCustomHeaderSettings](#geoipcustomheadersettings)_ |  false  |  | CustomHeader configures the GeoIP filter to extract the client IP from a specific request header<br />instead of mirroring the listener client IP detection settings.<br />This is useful when original IP detection extensions derive a header such as x-envoy-external-address. |
 
 
 #### EnvoyProxyHostProvider
@@ -2743,6 +2744,20 @@ _Appears in:_
 | `isHosting` | _boolean_ |  false  |  | IsHosting matches whether the client IP belongs to a hosting provider. |
 | `isTor` | _boolean_ |  false  |  | IsTor matches whether the client IP belongs to a Tor exit node. |
 | `isProxy` | _boolean_ |  false  |  | IsProxy matches whether the client IP belongs to a public proxy. |
+
+
+#### GeoIPCustomHeaderSettings
+
+
+
+GeoIPCustomHeaderSettings configures the GeoIP filter to extract the client IP address from a request header.
+
+_Appears in:_
+- [EnvoyProxyGeoIP](#envoyproxygeoip)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `name` | _string_ |  true  |  | Name is the request header containing the client IP address for the GeoIP filter. |
 
 
 #### GeoIPDBSource
