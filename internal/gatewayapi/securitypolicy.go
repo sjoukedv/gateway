@@ -2481,7 +2481,8 @@ func buildGeoIPProvider(envoyProxy *egv1a1.EnvoyProxy) (*ir.GeoIPProvider, error
 		return nil, nil
 	}
 
-	provider := envoyProxy.Spec.GeoIP.Provider
+	geoIP := envoyProxy.Spec.GeoIP
+	provider := geoIP.Provider
 	switch provider.Type {
 	case egv1a1.GeoIPProviderTypeMaxMind:
 		if provider.MaxMind == nil {
@@ -2496,7 +2497,7 @@ func buildGeoIPProvider(envoyProxy *egv1a1.EnvoyProxy) (*ir.GeoIPProvider, error
 				ISPDBPath:         localGeoIPDBPath(provider.MaxMind.ISPDBSource),
 				AnonymousIPDBPath: localGeoIPDBPath(provider.MaxMind.AnonymousIPDBSource),
 			},
-			CustomHeader: geoIPCustomHeader(provider.CustomHeader),
+			CustomHeader: geoIPCustomHeader(geoIP.CustomHeader),
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported geoIP provider type %q", provider.Type)
