@@ -26,6 +26,16 @@ const (
 	GeoIPProviderTypeMaxMind GeoIPProviderType = "MaxMind"
 )
 
+// GeoIPCustomHeaderSettings configures the GeoIP filter to extract the client IP address from a request header.
+type GeoIPCustomHeaderSettings struct {
+	// Name is the request header containing the client IP address for the GeoIP filter.
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +kubebuilder:validation:Pattern="^[A-Za-z0-9-]+$"
+	Name string `json:"name"`
+}
+
 // GeoIPMaxMind configures the MaxMind provider.
 // These database files are expected to be mounted into the Envoy container, and a sidecar container can be used to update the database files.
 // +kubebuilder:validation:XValidation:rule="has(self.cityDbSource) || has(self.countryDbSource) || has(self.asnDbSource) || has(self.ispDbSource) || has(self.anonymousIpDbSource)",message="at least one MaxMind database source must be specified"

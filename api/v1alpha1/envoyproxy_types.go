@@ -222,6 +222,13 @@ type EnvoyProxySpec struct {
 type EnvoyProxyGeoIP struct {
 	// Provider defines the GeoIP provider configuration used by GeoIP filter instances.
 	Provider GeoIPProvider `json:"provider"`
+
+	// CustomHeader configures the GeoIP filter to extract the client IP from a specific request header
+	// instead of mirroring the listener client IP detection settings.
+	// This is useful when original IP detection extensions derive a header such as x-envoy-external-address.
+	//
+	// +optional
+	CustomHeader *GeoIPCustomHeaderSettings `json:"customHeader,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=Strict;InsecureSyntax;Disabled

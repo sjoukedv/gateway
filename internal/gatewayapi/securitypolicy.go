@@ -2438,17 +2438,17 @@ func validateAuthorizationGeoIP(
 		return nil, errors.New("authorization clientIPGeoLocations requires ClientTrafficPolicy.spec.clientIPDetection to be configured")
 	}
 
-	if clientIPDetection.XForwardedFor != nil &&
-		len(clientIPDetection.XForwardedFor.TrustedCIDRs) > 0 {
-		return nil, errors.New("authorization clientIPGeoLocations does not support ClientIPDetection.XForwardedFor.TrustedCIDRs")
-	}
-
 	geoIPProvider, err := buildGeoIPProvider(envoyProxy)
 	if err != nil {
 		return nil, err
 	}
 	if geoIPProvider == nil || geoIPProvider.MaxMind == nil {
 		return nil, errors.New("authorization clientIPGeoLocations requires EnvoyProxy.spec.geoIP.provider to be configured")
+	}
+	if clientIPDetection.XForwardedFor != nil &&
+		len(clientIPDetection.XForwardedFor.TrustedCIDRs) > 0 &&
+		geoIPProvider.CustomHeader == nil {
+		return nil, errors.New("authorization clientIPGeoLocations does not support ClientIPDetection.XForwardedFor.TrustedCIDRs without EnvoyProxy.spec.geoIP.customHeader")
 	}
 
 	country, region, city, asn, isp, anonymous := authorization.GeoIPRequirements()
@@ -2496,6 +2496,7 @@ func buildGeoIPProvider(envoyProxy *egv1a1.EnvoyProxy) (*ir.GeoIPProvider, error
 				ISPDBPath:         localGeoIPDBPath(provider.MaxMind.ISPDBSource),
 				AnonymousIPDBPath: localGeoIPDBPath(provider.MaxMind.AnonymousIPDBSource),
 			},
+			CustomHeader: geoIPCustomHeader(provider.CustomHeader),
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported geoIP provider type %q", provider.Type)
@@ -2507,6 +2508,16 @@ func localGeoIPDBPath(source *egv1a1.GeoIPDBSource) *string {
 		return nil
 	}
 	return &source.Local.Path
+}
+
+func geoIPCustomHeader(header *egv1a1.GeoIPCustomHeaderSettings) *ir.GeoIPCustomHeaderSettings {
+	if header == nil {
+		return nil
+	}
+
+	return &ir.GeoIPCustomHeaderSettings{
+		Name: header.Name,
+	}
 }
 
 func defaultAuthorizationRuleName(policy *egv1a1.SecurityPolicy, index int) string {

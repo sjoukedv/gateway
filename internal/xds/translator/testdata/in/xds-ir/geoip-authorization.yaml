@@ -1,10 +1,12 @@
 http:
 - address: 0.0.0.0
   clientIPDetection:
-    customHeader:
-      failClosed: false
-      name: x-real-client-ip
+    xForwardedFor:
+      trustedCidrs:
+      - 10.0.0.0/8
   geoIPProvider:
+    customHeader:
+      name: x-envoy-external-address
     maxMind:
       anonymousIpDbPath: /db/GeoIP2-Anonymous-IP.mmdb
       cityDbPath: /db/GeoLite2-City.mmdb

@@ -1249,7 +1249,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 		}
 	}
 
-	newEnvoyProxy := func(maxMind *egv1a1.GeoIPMaxMind) *egv1a1.EnvoyProxy {
+	newEnvoyProxy := func(maxMind *egv1a1.GeoIPMaxMind, customHeader *egv1a1.GeoIPCustomHeaderSettings) *egv1a1.EnvoyProxy {
 		if maxMind == nil {
 			return &egv1a1.EnvoyProxy{}
 		}
@@ -1261,6 +1261,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 						Type:    egv1a1.GeoIPProviderTypeMaxMind,
 						MaxMind: maxMind,
 					},
+					CustomHeader: customHeader,
 				},
 			},
 		}
@@ -1289,7 +1290,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Country: new("US")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CountryDBSource: countryDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantProvider:      true,
 		},
@@ -1305,7 +1306,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Country: new("US")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CountryDBSource: countryDB,
-			}),
+			}, nil),
 			wantErr: "requires ClientTrafficPolicy.spec.clientIPDetection to be configured",
 		},
 		{
@@ -1313,20 +1314,33 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Country: new("US")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CountryDBSource: countryDB,
-			}),
+			}, nil),
 			clientIPDetection: &ir.ClientIPDetectionSettings{
 				XForwardedFor: &egv1a1.XForwardedForSettings{
 					TrustedCIDRs: []egv1a1.CIDR{"10.0.0.0/8"},
 				},
 			},
-			wantErr: "does not support ClientIPDetection.XForwardedFor.TrustedCIDRs",
+			wantErr: "does not support ClientIPDetection.XForwardedFor.TrustedCIDRs without EnvoyProxy.spec.geoIP.customHeader",
+		},
+		{
+			name:          "trusted cidrs accepted with geoip custom header override",
+			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Country: new("US")}),
+			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
+				CountryDBSource: countryDB,
+			}, &egv1a1.GeoIPCustomHeaderSettings{Name: "x-envoy-external-address"}),
+			clientIPDetection: &ir.ClientIPDetectionSettings{
+				XForwardedFor: &egv1a1.XForwardedForSettings{
+					TrustedCIDRs: []egv1a1.CIDR{"10.0.0.0/8"},
+				},
+			},
+			wantProvider: true,
 		},
 		{
 			name:          "region requires city database",
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Region: new("CA")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CountryDBSource: countryDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantErr:           "clientIPGeoLocations.region requires EnvoyProxy.spec.geoIP.provider.maxMind.cityDbSource",
 		},
@@ -1335,7 +1349,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{ASN: new(uint32(64512))}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CityDBSource: cityDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantErr:           "clientIPGeoLocations.asn requires EnvoyProxy.spec.geoIP.provider.maxMind.asnDbSource",
 		},
@@ -1344,7 +1358,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{ISP: new("Example ISP")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CityDBSource: cityDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantErr:           "clientIPGeoLocations.isp requires EnvoyProxy.spec.geoIP.provider.maxMind.ispDbSource",
 		},
@@ -1355,7 +1369,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CityDBSource: cityDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantErr:           "clientIPGeoLocations.anonymous requires EnvoyProxy.spec.geoIP.provider.maxMind.anonymousIpDbSource",
 		},
@@ -1366,7 +1380,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				AnonymousIPDBSource: anonymousDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantProvider:      true,
 		},
@@ -1375,7 +1389,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{Country: new("US")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				CityDBSource: cityDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantProvider:      true,
 		},
@@ -1384,7 +1398,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{ASN: new(uint32(64512))}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				ASNDBSource: asnDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantProvider:      true,
 		},
@@ -1393,7 +1407,7 @@ func Test_validateAuthorizationGeoIPForHTTP(t *testing.T) {
 			authorization: newAuthorization(egv1a1.ClientIPGeoLocation{ISP: new("Example ISP")}),
 			envoyProxy: newEnvoyProxy(&egv1a1.GeoIPMaxMind{
 				ISPDBSource: ispDB,
-			}),
+			}, nil),
 			clientIPDetection: customHeaderDetection,
 			wantProvider:      true,
 		},

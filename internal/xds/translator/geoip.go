@@ -199,8 +199,12 @@ func buildHCMGeoIPFilter(irListener *ir.HTTPListener, requirements geoIPFieldReq
 	cfg := &httpgeoipv3.Geoip{
 		Provider: provider,
 	}
-	// irListener.ClientIPDetection should never be nil since we've already verified it in the Gateway API translator, just a sanity check
-	if irListener.ClientIPDetection != nil {
+	if irListener.GeoIPProvider != nil && irListener.GeoIPProvider.CustomHeader != nil {
+		cfg.CustomHeaderConfig = &httpgeoipv3.Geoip_CustomHeaderConfig{
+			HeaderName: irListener.GeoIPProvider.CustomHeader.Name,
+		}
+	} else if irListener.ClientIPDetection != nil {
+		// irListener.ClientIPDetection should never be nil since we've already verified it in the Gateway API translator, just a sanity check
 		switch {
 		case irListener.ClientIPDetection.CustomHeader != nil:
 			cfg.CustomHeaderConfig = &httpgeoipv3.Geoip_CustomHeaderConfig{

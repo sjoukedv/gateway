@@ -2592,6 +2592,9 @@ type GlobalResources struct {
 type GeoIPProvider struct {
 	// MaxMind holds MaxMind-specific provider settings.
 	MaxMind *GeoIPMaxMindProvider `json:"maxMind,omitempty" yaml:"maxMind,omitempty"`
+
+	// CustomHeader configures the GeoIP filter to extract the client IP from a specific request header.
+	CustomHeader *GeoIPCustomHeaderSettings `json:"customHeader,omitempty" yaml:"customHeader,omitempty"`
 }
 
 // GeoIPMaxMindProvider holds MaxMind database file paths.
@@ -2603,6 +2606,10 @@ type GeoIPMaxMindProvider struct {
 	ISPDBPath         *string `json:"ispDbPath,omitempty" yaml:"ispDbPath,omitempty"`
 	AnonymousIPDBPath *string `json:"anonymousIpDbPath,omitempty" yaml:"anonymousIpDbPath,omitempty"`
 }
+
+// GeoIPCustomHeaderSettings configures the GeoIP filter to extract the client IP address from a request header.
+// +k8s:deepcopy-gen=true
+type GeoIPCustomHeaderSettings egv1a1.GeoIPCustomHeaderSettings
 
 // LocalRateLimit holds the local rate limiting configuration.
 // +k8s:deepcopy-gen=true
